@@ -9,27 +9,9 @@ variable "rds_account_id" {
   type        = string
 }
 
-variable "rds_endpoint" {
-  description = "RDS PostgreSQL endpoint hostname"
+variable "vpc_lattice_endpoint" {
+  description = "VPC Lattice service endpoint from RDS account"
   type        = string
-}
-
-variable "db_name" {
-  description = "PostgreSQL database name"
-  type        = string
-  default     = "transactions_db"
-}
-
-variable "db_username" {
-  description = "PostgreSQL database username"
-  type        = string
-  default     = "dbadmin"
-}
-
-variable "db_password" {
-  description = "PostgreSQL database password from RDS account"
-  type        = string
-  sensitive   = true
 }
 
 variable "rds_vpc_lattice_service_arn" {

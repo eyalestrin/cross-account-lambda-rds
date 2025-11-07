@@ -1,6 +1,8 @@
 import json
-import psycopg2
+import urllib3
 import os
+
+http = urllib3.PoolManager()
 
 def lambda_handler(event, context):
     try:
@@ -15,25 +17,17 @@ def lambda_handler(event, context):
                 'body': json.dumps({'error': 'transaction_id required'})
             }
         
-        # Connect to RDS using environment variables
-        conn = psycopg2.connect(
-            host=os.environ['DB_HOST'],
-            database=os.environ['DB_NAME'],
-            user=os.environ['DB_USER'],
-            password=os.environ['DB_PASSWORD'],
-            sslmode='require'
+        # Call VPC Lattice proxy Lambda
+        vpc_lattice_endpoint = os.environ['VPC_LATTICE_ENDPOINT']
+        response = http.request(
+            'POST',
+            vpc_lattice_endpoint,
+            body=json.dumps({'transaction_id': transaction_id}),
+            headers={'Content-Type': 'application/json'}
         )
         
-        # Query specific transaction
-        cur = conn.cursor()
-        cur.execute("SELECT description FROM transactions WHERE transaction_id = %s", (int(transaction_id),))
-        row = cur.fetchone()
-        
-        cur.close()
-        conn.close()
-        
-        # Return result
-        result = {transaction_id: row[0] if row else None}
+        # Parse response
+        result = json.loads(response.data.decode('utf-8'))
         
         return {
             'statusCode': 200,

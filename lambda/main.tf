@@ -206,10 +206,7 @@ resource "aws_lambda_function" "rds_reader" {
 
   environment {
     variables = {
-      DB_HOST     = var.rds_endpoint
-      DB_NAME     = var.db_name
-      DB_USER     = var.db_username
-      DB_PASSWORD = var.db_password
+      VPC_LATTICE_ENDPOINT = var.vpc_lattice_endpoint
     }
   }
 

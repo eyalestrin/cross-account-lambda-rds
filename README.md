@@ -1,14 +1,16 @@
 # Cross-Account Lambda to RDS via VPC Lattice
 
 ## Architecture
-- **Account 1 (Lambda)**: S3 static website + Lambda function
-- **Account 2 (RDS)**: PostgreSQL RDS (publicly accessible) + AWS Secrets Manager
-- **Connection**: Lambda connects to RDS public endpoint using credentials from Secrets Manager
-- **Security**: AWS Secrets Manager for credential management, SSL/TLS encryption for database connection
+- **Account 1 (Lambda)**: S3 static website + Frontend Lambda function + VPC Lattice Service Network
+- **Account 2 (RDS)**: PostgreSQL RDS (private) + Proxy Lambda + VPC Lattice Service + AWS Secrets Manager
+- **Connection**: Frontend Lambda → VPC Lattice (HTTPS) → Proxy Lambda → RDS
+- **Security**: VPC Lattice with AWS_IAM authentication, RDS in private subnet
 
-**Note**: RDS is publicly accessible to allow cross-account Lambda connection. Use security groups to restrict access.
-
-**Cross-Account Limitation**: AWS Secrets Manager doesn't support cross-account resource policies. The secret ARN is passed to Lambda, but cross-account access requires the secret to be replicated to the Lambda account or credentials passed via other means.
+**VPC Lattice Flow:**
+1. Frontend Lambda calls VPC Lattice HTTPS endpoint
+2. VPC Lattice routes to Proxy Lambda in Account 2
+3. Proxy Lambda (in VPC) connects to private RDS
+4. Returns data through VPC Lattice to Frontend Lambda
 
 ## Prerequisites
 
@@ -151,22 +153,18 @@ aws vpc-lattice list-services --query 'items[?name==`rds-postgres-service`].arn'
 # Save this value - you'll need it for lambda/terraform.tfvars -> rds_vpc_lattice_service_arn
 ```
 
-### 3. Get RDS Password and Update Lambda
+### 3. Get VPC Lattice Endpoint and Update Lambda
 ```bash
-# In RDS account - get the password
-SECRET_ARN=$(aws secretsmanager list-secrets --query 'SecretList[?starts_with(Name, `rds-db-credentials`) && !DeletedDate].ARN' --output text)
-DB_PASSWORD=$(aws secretsmanager get-secret-value --secret-id $SECRET_ARN --query SecretString --output text | python3 -c "import sys, json; print(json.load(sys.stdin)['password'])")
-echo "Password: $DB_PASSWORD"
-# Copy this password
+# In RDS account - get VPC Lattice endpoint
+terraform output vpc_lattice_endpoint
+# Copy this endpoint
 ```
 
 ```bash
 # In Lambda account
 cd ../lambda
 # Edit terraform.tfvars with:
-# - db_secret_arn = "<value from step 2>" (for reference only)
-# - rds_vpc_lattice_service_arn = "<value from step 2>"
-# Note: Due to cross-account limitations, you'll need to update Lambda environment with RDS endpoint and password
+# - vpc_lattice_endpoint = "<value from step 2>"
 terraform apply
 
 # Get API endpoint
@@ -183,19 +181,22 @@ aws s3 cp query.html s3://$BUCKET_NAME/index.html --content-type text/html
 ### 4. Load Sample Data
 ```bash
 cd rds
-# Make RDS publicly accessible for data loading
-terraform apply
-# Wait 2-3 minutes for RDS to become publicly accessible
 
-# Get RDS endpoint
-RDS_ENDPOINT=$(aws rds describe-db-instances --db-instance-identifier transactions-db --query 'DBInstances[0].Endpoint.Address' --output text)
+# Invoke proxy Lambda to load data
+aws lambda invoke \
+  --function-name rds-proxy-lambda \
+  --cli-binary-format raw-in-base64-out \
+  --payload '{"body":"{\"sql\":\"CREATE TABLE IF NOT EXISTS transactions (transaction_id INTEGER PRIMARY KEY, description VARCHAR(30))\"}"}' \
+  response.json
 
-# Get password from Secrets Manager (exclude deleted secrets)
-SECRET_ARN=$(aws secretsmanager list-secrets --query 'SecretList[?starts_with(Name, `rds-db-credentials`) && !DeletedDate].ARN' --output text)
-DB_PASSWORD=$(aws secretsmanager get-secret-value --secret-id $SECRET_ARN --query SecretString --output text | python3 -c "import sys, json; print(json.load(sys.stdin)['password'])")
-
-# Load data (SSL required)
-PGPASSWORD=$DB_PASSWORD psql "host=$RDS_ENDPOINT port=5432 dbname=transactions_db user=dbadmin sslmode=require" -f transactions_data.sql
+# Load each transaction via proxy Lambda
+for id in 10234567 20456789 30678901 40891234 50123456 60345678 70567890 80789012 90901234 11223344 22334455 33445566 44556677 55667788 66778899 77889900 88990011 99001122 12345678 23456789; do
+  aws lambda invoke \
+    --function-name rds-proxy-lambda \
+    --cli-binary-format raw-in-base64-out \
+    --payload "{\"body\":\"{\\\"transaction_id\\\":\\\"$id\\\"}\"}" \
+    response.json
+done
 ```
 
 ## Access

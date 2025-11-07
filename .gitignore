@@ -15,6 +15,9 @@ lambda/.terraform/
 
 # RDS
 rds/.terraform/
+rds/proxy_layer/
+rds/lambda_proxy.zip
+rds/proxy_psycopg2_layer.zip
 
 # Python
 __pycache__/
