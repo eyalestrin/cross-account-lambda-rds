@@ -6,9 +6,9 @@ lambda_account_id = "YOUR_LAMBDA_ACCOUNT_ID"  # REQUIRED: Replace with actual La
 
 # Database Configuration
 db_name             = "transactions_db"
-db_username         = "admin"
+db_username         = "dbadmin"
 db_instance_class   = "db.t3.micro"
 allocated_storage   = 20
 
 # VPC Lattice Configuration (obtain from Lambda account after deployment)
-lambda_service_network_arn = "arn:aws:vpc-lattice:us-east-1:987654321098:servicenetwork/sn-xxxxx"
+lambda_service_network_arn = "REPLACE_WITH_ACTUAL_SERVICE_NETWORK_ARN_FROM_STEP_1"

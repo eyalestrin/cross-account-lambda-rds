@@ -117,6 +117,7 @@ cp terraform.tfvars.example terraform.tfvars
 # Edit terraform.tfvars with:
 # - lambda_account_id = "<value from Lambda account>"
 # - lambda_service_network_arn = "<value from step 1>"
+# CRITICAL: Use the ACTUAL ARN from step 1, not the example placeholder
 terraform init
 terraform plan
 terraform apply
@@ -148,8 +149,11 @@ cd rds
 # Get RDS endpoint
 RDS_ENDPOINT=$(aws rds describe-db-instances --db-instance-identifier transactions-db --query 'DBInstances[0].Endpoint.Address' --output text)
 
+# Get password from Secrets Manager
+DB_PASSWORD=$(aws secretsmanager get-secret-value --secret-id rds-db-credentials --query SecretString --output text | grep -o '"password":"[^"]*' | cut -d'"' -f4)
+
 # Load data
-psql -h $RDS_ENDPOINT -U admin -d transactions_db -f transactions_data.sql
+PGPASSWORD=$DB_PASSWORD psql -h $RDS_ENDPOINT -U dbadmin -d transactions_db -f transactions_data.sql
 ```
 
 ## Access
