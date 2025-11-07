@@ -117,7 +117,7 @@ resource "aws_vpclattice_resource_policy" "service_network" {
         AWS = "${var.rds_account_id}"
       }
       Action = "*"
-      Resource = "*"
+      Resource = aws_vpclattice_service_network.main.arn
     }]
   })
 }
