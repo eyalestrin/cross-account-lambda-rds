@@ -1,3 +1,8 @@
+CREATE TABLE IF NOT EXISTS transactions (
+    transaction_id INTEGER PRIMARY KEY,
+    description VARCHAR(30)
+);
+
 INSERT INTO transactions (transaction_id, description) VALUES
 (10234567, 'Online purchase at Amazon'),
 (20456789, 'Gas station payment'),
