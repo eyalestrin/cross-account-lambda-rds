@@ -170,7 +170,7 @@ resource "null_resource" "psycopg2_layer" {
   provisioner "local-exec" {
     command = <<-EOT
       mkdir -p ${path.module}/layer/python
-      pip3 install --platform manylinux2014_x86_64 --only-binary=:all: psycopg2-binary -t ${path.module}/layer/python
+      docker run --rm -v ${path.module}/layer:/layer public.ecr.aws/sam/build-python3.11 pip install psycopg2-binary -t /layer/python
     EOT
   }
   triggers = {

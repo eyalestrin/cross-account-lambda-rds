@@ -21,7 +21,7 @@ ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
 aws s3control delete-public-access-block --account-id $ACCOUNT_ID
 ```
 
-### Install Python pip (Lambda Account Only)
+### Install Python pip and Docker (Lambda Account Only)
 Run in Lambda account CloudShell:
 
 ```bash
@@ -30,6 +30,15 @@ sudo yum install -y python3-pip
 
 # Verify installation
 pip3 --version
+
+# Install Docker for Lambda layer building
+sudo yum install -y docker
+sudo service docker start
+sudo usermod -a -G docker cloudshell-user
+
+# Restart CloudShell session for Docker group to take effect
+exit
+# Then reconnect to CloudShell
 ```
 
 ### Install Terraform in AWS CloudShell
