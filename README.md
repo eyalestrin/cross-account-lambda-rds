@@ -170,7 +170,7 @@ RDS_ENDPOINT=$(aws rds describe-db-instances --db-instance-identifier transactio
 
 # Get password from Secrets Manager (exclude deleted secrets)
 SECRET_ARN=$(aws secretsmanager list-secrets --query 'SecretList[?starts_with(Name, `rds-db-credentials`) && !DeletedDate].ARN' --output text)
-DB_PASSWORD=$(aws secretsmanager get-secret-value --secret-id $SECRET_ARN --query SecretString --output text | grep -o '"password":"[^"]*' | cut -d'"' -f4)
+DB_PASSWORD=$(aws secretsmanager get-secret-value --secret-id $SECRET_ARN --query SecretString --output text | python3 -c "import sys, json; print(json.load(sys.stdin)['password'])")
 
 # Load data (SSL required)
 PGPASSWORD=$DB_PASSWORD psql "host=$RDS_ENDPOINT port=5432 dbname=transactions_db user=dbadmin sslmode=require" -f transactions_data.sql
