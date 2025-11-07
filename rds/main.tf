@@ -275,5 +275,9 @@ output "db_secret_arn" {
 }
 
 output "vpc_lattice_endpoint" {
-  value = "https://${aws_vpclattice_service.rds.dns_entry[0].domain_name}"
+  value = aws_vpclattice_service.rds.dns_entry[0].domain_name
+}
+
+output "vpc_lattice_service_id" {
+  value = aws_vpclattice_service.rds.id
 }

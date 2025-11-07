@@ -19,11 +19,15 @@ def lambda_handler(event, context):
         
         # Call VPC Lattice proxy Lambda
         vpc_lattice_endpoint = os.environ['VPC_LATTICE_ENDPOINT']
+        if not vpc_lattice_endpoint.startswith('http'):
+            vpc_lattice_endpoint = f'https://{vpc_lattice_endpoint}'
+        
         response = http.request(
             'POST',
             vpc_lattice_endpoint,
             body=json.dumps({'transaction_id': transaction_id}),
-            headers={'Content-Type': 'application/json'}
+            headers={'Content-Type': 'application/json'},
+            timeout=25.0
         )
         
         # Parse response

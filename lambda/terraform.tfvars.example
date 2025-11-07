@@ -5,7 +5,7 @@ aws_region = "us-east-1"
 rds_account_id = "YOUR_RDS_ACCOUNT_ID"  # REQUIRED: Replace with actual RDS AWS account ID
 
 # VPC Lattice Endpoint (obtain from RDS account after deployment)
-vpc_lattice_endpoint = "https://rds-postgres-service-xxxxx.vpc-lattice-svcs.us-east-1.on.aws"
+vpc_lattice_endpoint = "rds-postgres-service-xxxxx.vpc-lattice-svcs.us-east-1.on.aws"
 
 # VPC Lattice Configuration (obtain from RDS account after deployment)
 rds_vpc_lattice_service_arn = "arn:aws:vpc-lattice:us-east-1:123456789012:service/svc-xxxxx"
