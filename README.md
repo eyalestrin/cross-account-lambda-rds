@@ -141,7 +141,7 @@ terraform apply
 **Get RDS variables:**
 ```bash
 # Get db_secret_arn
-aws secretsmanager list-secrets --query 'SecretList[?Name==`rds-db-credentials`].ARN' --output text
+aws secretsmanager list-secrets --query 'SecretList[?starts_with(Name, `rds-db-credentials`)].ARN' --output text
 # Save this value - you'll need it for lambda/terraform.tfvars -> db_secret_arn
 
 # Get rds_vpc_lattice_service_arn
@@ -165,7 +165,8 @@ cd rds
 RDS_ENDPOINT=$(aws rds describe-db-instances --db-instance-identifier transactions-db --query 'DBInstances[0].Endpoint.Address' --output text)
 
 # Get password from Secrets Manager
-DB_PASSWORD=$(aws secretsmanager get-secret-value --secret-id rds-db-credentials --query SecretString --output text | grep -o '"password":"[^"]*' | cut -d'"' -f4)
+SECRET_ARN=$(aws secretsmanager list-secrets --query 'SecretList[?starts_with(Name, `rds-db-credentials`)].ARN' --output text)
+DB_PASSWORD=$(aws secretsmanager get-secret-value --secret-id $SECRET_ARN --query SecretString --output text | grep -o '"password":"[^"]*' | cut -d'"' -f4)
 
 # Load data
 PGPASSWORD=$DB_PASSWORD psql -h $RDS_ENDPOINT -U dbadmin -d transactions_db -f transactions_data.sql

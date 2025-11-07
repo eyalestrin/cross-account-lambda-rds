@@ -58,7 +58,7 @@ resource "aws_db_subnet_group" "rds" {
 
 # Secrets Manager for RDS credentials
 resource "aws_secretsmanager_secret" "rds_credentials" {
-  name                    = "rds-db-credentials"
+  name_prefix             = "rds-db-credentials-"
   recovery_window_in_days = 0
 }
 
