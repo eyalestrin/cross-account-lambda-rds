@@ -58,7 +58,8 @@ resource "aws_db_subnet_group" "rds" {
 
 # Secrets Manager for RDS credentials
 resource "aws_secretsmanager_secret" "rds_credentials" {
-  name = "rds-db-credentials"
+  name                    = "rds-db-credentials"
+  recovery_window_in_days = 0
 }
 
 resource "aws_secretsmanager_secret_version" "rds_credentials" {
@@ -110,7 +111,7 @@ resource "aws_vpclattice_listener" "rds" {
   port               = 443
   default_action {
     fixed_response {
-      status_code = 200
+      status_code = 404
     }
   }
 }
