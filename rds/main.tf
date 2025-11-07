@@ -31,7 +31,7 @@ resource "random_password" "db_password" {
 
 # RDS security group
 resource "aws_security_group" "rds" {
-  name        = "rds-postgres-lattice"
+  name_prefix = "rds-postgres-lattice-"
   description = "Allow PostgreSQL access via VPC Lattice and CloudShell"
   vpc_id      = data.aws_vpc.default.id
 
@@ -56,6 +56,10 @@ resource "aws_security_group" "rds" {
     to_port     = 0
     protocol    = "-1"
     cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  lifecycle {
+    create_before_destroy = true
   }
 }
 
