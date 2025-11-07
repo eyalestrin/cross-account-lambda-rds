@@ -8,6 +8,10 @@ terraform {
       source  = "hashicorp/random"
       version = "~> 3.0"
     }
+    null = {
+      source  = "hashicorp/null"
+      version = "~> 3.0"
+    }
   }
 }
 
@@ -145,11 +149,21 @@ resource "aws_iam_role_policy" "lambda_rds_iam_auth" {
   })
 }
 
-# Lambda function
+# Lambda function with dependencies
+resource "null_resource" "lambda_dependencies" {
+  provisioner "local-exec" {
+    command = "pip install psycopg2-binary boto3 -t ${path.module}/package && cp ${path.module}/lambda_rds_reader.py ${path.module}/package/"
+  }
+  triggers = {
+    always_run = timestamp()
+  }
+}
+
 data "archive_file" "lambda" {
   type        = "zip"
-  source_file = "${path.module}/lambda_rds_reader.py"
+  source_dir  = "${path.module}/package"
   output_path = "${path.module}/lambda_function.zip"
+  depends_on  = [null_resource.lambda_dependencies]
 }
 
 resource "aws_lambda_function" "rds_reader" {
@@ -171,8 +185,6 @@ resource "aws_lambda_function" "rds_reader" {
       DB_SECRET_ARN = var.db_secret_arn
     }
   }
-
-  layers = ["arn:aws:lambda:${var.aws_region}:898466741470:layer:psycopg2-py38:1"]
 }
 
 output "website_url" {

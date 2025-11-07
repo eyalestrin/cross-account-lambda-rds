@@ -8,6 +8,28 @@
 
 ## Prerequisites
 
+### Disable S3 Block Public Access (Lambda Account Only)
+Run in Lambda account CloudShell:
+
+```bash
+# Get your account ID
+ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
+
+# Disable account-level S3 Block Public Access
+aws s3control delete-public-access-block --account-id $ACCOUNT_ID
+```
+
+### Install Python pip (Lambda Account Only)
+Run in Lambda account CloudShell:
+
+```bash
+# Install pip for Python 3
+sudo yum install -y python3-pip
+
+# Verify installation
+pip3 --version
+```
+
 ### Install Terraform in AWS CloudShell
 Run these commands in both AWS account CloudShells:
 
