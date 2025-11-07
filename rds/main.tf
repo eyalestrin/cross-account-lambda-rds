@@ -75,7 +75,7 @@ resource "aws_secretsmanager_secret_version" "rds_credentials" {
 resource "aws_db_instance" "postgres" {
   identifier             = "transactions-db"
   engine                 = "postgres"
-  engine_version         = "15.4"
+  engine_version         = "15"
   instance_class         = var.db_instance_class
   allocated_storage      = var.allocated_storage
   db_name                = var.db_name
@@ -142,47 +142,15 @@ resource "aws_vpclattice_auth_policy" "rds" {
     Version = "2012-10-17"
     Statement = [{
       Effect    = "Allow"
-      Principal = {
-        AWS = "arn:aws:iam::${var.lambda_account_id}:root"
-      }
-      Action   = "vpc-lattice:Invoke"
+      Principal = "*"
+      Action   = "vpc-lattice-svcs:Invoke"
       Resource = "*"
-    }]
-  })
-}
-
-# IAM role for RDS authentication
-resource "aws_iam_role" "rds_access" {
-  name = "rds-cross-account-access"
-  assume_role_policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [{
-      Effect = "Allow"
-      Principal = {
-        AWS = "arn:aws:iam::${var.lambda_account_id}:root"
+      Condition = {
+        StringEquals = {
+          "aws:PrincipalAccount" = var.lambda_account_id
+        }
       }
-      Action = "sts:AssumeRole"
     }]
-  })
-}
-
-resource "aws_iam_role_policy" "rds_connect" {
-  name = "rds-iam-connect"
-  role = aws_iam_role.rds_access.id
-  policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [
-      {
-        Effect = "Allow"
-        Action = "rds-db:connect"
-        Resource = "arn:aws:rds-db:${var.aws_region}:${data.aws_caller_identity.current.account_id}:dbuser:${aws_db_instance.postgres.resource_id}/${var.db_username}"
-      },
-      {
-        Effect = "Allow"
-        Action = "secretsmanager:GetSecretValue"
-        Resource = aws_secretsmanager_secret.rds_credentials.arn
-      }
-    ]
   })
 }
 
@@ -192,12 +160,18 @@ resource "aws_secretsmanager_secret_policy" "cross_account" {
   policy = jsonencode({
     Version = "2012-10-17"
     Statement = [{
+      Sid    = "AllowLambdaAccountAccess"
       Effect = "Allow"
       Principal = {
-        AWS = "arn:aws:iam::${var.lambda_account_id}:root"
+        Service = "lambda.amazonaws.com"
       }
       Action = "secretsmanager:GetSecretValue"
       Resource = "*"
+      Condition = {
+        StringEquals = {
+          "aws:SourceAccount" = var.lambda_account_id
+        }
+      }
     }]
   })
 }
@@ -212,10 +186,6 @@ output "rds_arn" {
 
 output "vpc_lattice_service_arn" {
   value = aws_vpclattice_service.rds.arn
-}
-
-output "cross_account_role_arn" {
-  value = aws_iam_role.rds_access.arn
 }
 
 output "db_secret_arn" {

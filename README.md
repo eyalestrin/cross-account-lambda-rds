@@ -89,6 +89,8 @@ aws sts get-caller-identity --query Account --output text
 # Save this value - you'll need it for lambda/terraform.tfvars -> rds_account_id
 ```
 
+**IMPORTANT**: Make sure to use the ACTUAL account IDs from the AWS CLI commands above, not the example values in terraform.tfvars.example files.
+
 ## Deployment Steps
 
 ### 1. Deploy Lambda Account (Account 1)

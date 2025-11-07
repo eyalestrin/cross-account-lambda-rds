@@ -2,7 +2,7 @@
 aws_region = "us-east-1"
 
 # RDS Account Information
-rds_account_id = "123456789012"  # Replace with actual RDS AWS account ID
+rds_account_id = "YOUR_RDS_ACCOUNT_ID"  # REQUIRED: Replace with actual RDS AWS account ID
 
 # Database Secret (obtain from RDS account after deployment)
 db_secret_arn = "arn:aws:secretsmanager:us-east-1:123456789012:secret:rds-db-credentials-xxxxx"

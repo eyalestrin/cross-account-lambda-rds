@@ -2,7 +2,7 @@
 aws_region = "us-east-1"
 
 # Lambda Account Information
-lambda_account_id = "987654321098"  # Replace with actual Lambda AWS account ID
+lambda_account_id = "YOUR_LAMBDA_ACCOUNT_ID"  # REQUIRED: Replace with actual Lambda AWS account ID from step 1
 
 # Database Configuration
 db_name             = "transactions_db"
