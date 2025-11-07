@@ -33,7 +33,8 @@ pip3 --version
 
 # Install Docker for Lambda layer building
 sudo yum install -y docker
-sudo service docker start
+sudo systemctl start docker
+sudo systemctl enable docker
 sudo usermod -a -G docker cloudshell-user
 
 # Restart CloudShell session for Docker group to take effect
