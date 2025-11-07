@@ -6,7 +6,7 @@
 - **Connection**: Lambda connects to RDS public endpoint using credentials from Secrets Manager
 - **Security**: AWS Secrets Manager for credential management, SSL/TLS encryption for database connection
 
-**Note**: RDS is publicly accessible to allow cross-account Lambda connection. Use security groups to restrict access.
+**Note**: RDS is publicly accessible to allow cross-account Lambda connection. Use security groups to restrict access. Lambda IAM role has wildcard permission for Secrets Manager to access cross-account secrets.
 
 ## Prerequisites
 

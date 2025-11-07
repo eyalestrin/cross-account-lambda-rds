@@ -159,7 +159,7 @@ resource "aws_iam_role_policy" "lambda_rds_iam_auth" {
       {
         Effect = "Allow"
         Action = "secretsmanager:GetSecretValue"
-        Resource = var.db_secret_arn
+        Resource = "*"
       }
     ]
   })

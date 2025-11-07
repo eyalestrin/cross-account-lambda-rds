@@ -154,22 +154,7 @@ resource "aws_vpclattice_auth_policy" "rds" {
   })
 }
 
-# Secrets Manager resource policy for cross-account access
-resource "aws_secretsmanager_secret_policy" "cross_account" {
-  secret_arn = aws_secretsmanager_secret.rds_credentials.arn
-  policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [{
-      Sid    = "AllowLambdaAccountAccess"
-      Effect = "Allow"
-      Principal = {
-        AWS = "arn:aws:iam::${var.lambda_account_id}:root"
-      }
-      Action = "secretsmanager:GetSecretValue"
-      Resource = "*"
-    }]
-  })
-}
+
 
 output "rds_endpoint" {
   value = aws_db_instance.postgres.endpoint
