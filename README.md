@@ -1,12 +1,12 @@
 # Cross-Account Lambda to RDS via VPC Lattice
 
 ## Architecture
-- **Account 1 (Lambda)**: S3 static website + Lambda function + VPC Lattice Service Network
-- **Account 2 (RDS)**: PostgreSQL RDS + VPC Lattice Service + AWS Secrets Manager
-- **Connection**: VPC Lattice for cross-account, cross-VPC communication (HTTPS protocol)
-- **Security**: AWS Secrets Manager for credential management
+- **Account 1 (Lambda)**: S3 static website + Lambda function
+- **Account 2 (RDS)**: PostgreSQL RDS (publicly accessible) + AWS Secrets Manager
+- **Connection**: Lambda connects to RDS public endpoint using credentials from Secrets Manager
+- **Security**: AWS Secrets Manager for credential management, SSL/TLS encryption for database connection
 
-**Note**: VPC Lattice supports HTTP, HTTPS, and TLS_PASSTHROUGH protocols only. PostgreSQL connection uses HTTPS on port 443.
+**Note**: RDS is publicly accessible to allow cross-account Lambda connection. Use security groups to restrict access.
 
 ## Prerequisites
 
