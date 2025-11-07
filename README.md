@@ -172,8 +172,8 @@ RDS_ENDPOINT=$(aws rds describe-db-instances --db-instance-identifier transactio
 SECRET_ARN=$(aws secretsmanager list-secrets --query 'SecretList[?starts_with(Name, `rds-db-credentials`) && !DeletedDate].ARN' --output text)
 DB_PASSWORD=$(aws secretsmanager get-secret-value --secret-id $SECRET_ARN --query SecretString --output text | grep -o '"password":"[^"]*' | cut -d'"' -f4)
 
-# Load data
-PGPASSWORD=$DB_PASSWORD psql -h $RDS_ENDPOINT -U dbadmin -d transactions_db -f transactions_data.sql
+# Load data (SSL required)
+PGPASSWORD=$DB_PASSWORD psql "host=$RDS_ENDPOINT port=5432 dbname=transactions_db user=dbadmin sslmode=require" -f transactions_data.sql
 ```
 
 ## Access
