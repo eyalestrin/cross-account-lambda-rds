@@ -16,16 +16,12 @@ def lambda_handler(event, context):
                 'body': json.dumps({'error': 'transaction_id required'})
             }
         
-        # Get DB credentials from Secrets Manager
-        secrets_client = boto3.client('secretsmanager')
-        secret = json.loads(secrets_client.get_secret_value(SecretId=os.environ['DB_SECRET_ARN'])['SecretString'])
-        
-        # Connect to RDS
+        # Connect to RDS using environment variables
         conn = psycopg2.connect(
-            host=secret['host'],
-            database=secret['dbname'],
-            user=secret['username'],
-            password=secret['password'],
+            host=os.environ['DB_HOST'],
+            database=os.environ['DB_NAME'],
+            user=os.environ['DB_USER'],
+            password=os.environ['DB_PASSWORD'],
             sslmode='require'
         )
         

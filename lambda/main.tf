@@ -211,7 +211,10 @@ resource "aws_lambda_function" "rds_reader" {
 
   environment {
     variables = {
-      DB_SECRET_ARN = var.db_secret_arn
+      DB_HOST     = var.rds_endpoint
+      DB_NAME     = var.db_name
+      DB_USER     = var.db_username
+      DB_PASSWORD = var.db_password
     }
   }
 

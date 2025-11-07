@@ -9,9 +9,27 @@ variable "rds_account_id" {
   type        = string
 }
 
-variable "db_secret_arn" {
-  description = "ARN of AWS Secrets Manager secret containing RDS credentials from RDS account. Get with: aws secretsmanager list-secrets --query 'SecretList[?starts_with(Name, `rds-db-credentials`) && !DeletedDate].ARN' --output text"
+variable "rds_endpoint" {
+  description = "RDS PostgreSQL endpoint hostname"
   type        = string
+}
+
+variable "db_name" {
+  description = "PostgreSQL database name"
+  type        = string
+  default     = "transactions_db"
+}
+
+variable "db_username" {
+  description = "PostgreSQL database username"
+  type        = string
+  default     = "dbadmin"
+}
+
+variable "db_password" {
+  description = "PostgreSQL database password from RDS account"
+  type        = string
+  sensitive   = true
 }
 
 variable "rds_vpc_lattice_service_arn" {

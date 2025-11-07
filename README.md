@@ -6,7 +6,9 @@
 - **Connection**: Lambda connects to RDS public endpoint using credentials from Secrets Manager
 - **Security**: AWS Secrets Manager for credential management, SSL/TLS encryption for database connection
 
-**Note**: RDS is publicly accessible to allow cross-account Lambda connection. Use security groups to restrict access. Lambda IAM role has wildcard permission for Secrets Manager to access cross-account secrets.
+**Note**: RDS is publicly accessible to allow cross-account Lambda connection. Use security groups to restrict access.
+
+**Cross-Account Limitation**: AWS Secrets Manager doesn't support cross-account resource policies. The secret ARN is passed to Lambda, but cross-account access requires the secret to be replicated to the Lambda account or credentials passed via other means.
 
 ## Prerequisites
 
@@ -149,12 +151,22 @@ aws vpc-lattice list-services --query 'items[?name==`rds-postgres-service`].arn'
 # Save this value - you'll need it for lambda/terraform.tfvars -> rds_vpc_lattice_service_arn
 ```
 
-### 3. Update Lambda Account
+### 3. Get RDS Password and Update Lambda
 ```bash
+# In RDS account - get the password
+SECRET_ARN=$(aws secretsmanager list-secrets --query 'SecretList[?starts_with(Name, `rds-db-credentials`) && !DeletedDate].ARN' --output text)
+DB_PASSWORD=$(aws secretsmanager get-secret-value --secret-id $SECRET_ARN --query SecretString --output text | python3 -c "import sys, json; print(json.load(sys.stdin)['password'])")
+echo "Password: $DB_PASSWORD"
+# Copy this password
+```
+
+```bash
+# In Lambda account
 cd ../lambda
 # Edit terraform.tfvars with:
-# - db_secret_arn = "<value from step 2>"
+# - db_secret_arn = "<value from step 2>" (for reference only)
 # - rds_vpc_lattice_service_arn = "<value from step 2>"
+# Note: Due to cross-account limitations, you'll need to update Lambda environment with RDS endpoint and password
 terraform apply
 
 # Get API endpoint

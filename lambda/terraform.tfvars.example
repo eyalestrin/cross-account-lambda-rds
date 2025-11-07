@@ -4,8 +4,11 @@ aws_region = "us-east-1"
 # RDS Account Information
 rds_account_id = "YOUR_RDS_ACCOUNT_ID"  # REQUIRED: Replace with actual RDS AWS account ID
 
-# Database Secret (obtain from RDS account after deployment)
-db_secret_arn = "arn:aws:secretsmanager:us-east-1:123456789012:secret:rds-db-credentials-xxxxx"
+# RDS Connection Details (obtain from RDS account after deployment)
+rds_endpoint = "transactions-db.xxxxx.us-east-1.rds.amazonaws.com"
+db_name      = "transactions_db"
+db_username  = "dbadmin"
+db_password  = "REPLACE_WITH_PASSWORD_FROM_RDS_ACCOUNT"
 
 # VPC Lattice Configuration (obtain from RDS account after deployment)
 rds_vpc_lattice_service_arn = "arn:aws:vpc-lattice:us-east-1:123456789012:service/svc-xxxxx"
