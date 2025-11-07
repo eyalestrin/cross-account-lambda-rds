@@ -168,7 +168,7 @@ resource "aws_iam_role_policy" "lambda_rds_iam_auth" {
 # Lambda function with dependencies
 resource "null_resource" "lambda_dependencies" {
   provisioner "local-exec" {
-    command = "pip install psycopg2-binary boto3 -t ${path.module}/package && cp ${path.module}/lambda_rds_reader.py ${path.module}/package/"
+    command = "rm -rf ${path.module}/package && mkdir -p ${path.module}/package && pip3 install psycopg2-binary boto3 -t ${path.module}/package && cp ${path.module}/lambda_rds_reader.py ${path.module}/package/"
   }
   triggers = {
     always_run = timestamp()
