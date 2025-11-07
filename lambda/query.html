@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Transaction Query</title>
+</head>
+<body>
+    <h2>Transaction Lookup</h2>
+    <input type="text" id="transactionId" placeholder="Please insert transaction ID" maxlength="8">
+    <button onclick="validateAndSubmit()">Submit</button>
+    <p id="error" style="color:red;"></p>
+    
+    <script>
+        function validateAndSubmit() {
+            const input = document.getElementById('transactionId').value;
+            const error = document.getElementById('error');
+            
+            if (!/^\d{8}$/.test(input)) {
+                error.textContent = 'Invalid: Must be exactly 8 digits';
+                return;
+            }
+            
+            error.textContent = '';
+            // Call your Lambda API here
+            console.log('Valid transaction ID:', input);
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,14 @@
+# AWS Configuration
+aws_region = "us-east-1"
+
+# Lambda Account Information
+lambda_account_id = "987654321098"  # Replace with actual Lambda AWS account ID
+
+# Database Configuration
+db_name             = "transactions_db"
+db_username         = "admin"
+db_instance_class   = "db.t3.micro"
+allocated_storage   = 20
+
+# VPC Lattice Configuration (obtain from Lambda account after deployment)
+lambda_service_network_arn = "arn:aws:vpc-lattice:us-east-1:987654321098:servicenetwork/sn-xxxxx"

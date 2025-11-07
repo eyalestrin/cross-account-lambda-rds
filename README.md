@@ -1,0 +1,146 @@
+# Cross-Account Lambda to RDS via VPC Lattice
+
+## Architecture
+- **Account 1 (Lambda)**: S3 static website + Lambda function + VPC Lattice Service Network
+- **Account 2 (RDS)**: PostgreSQL RDS + VPC Lattice Service + AWS Secrets Manager
+- **Connection**: VPC Lattice for cross-account, cross-VPC communication
+- **Security**: AWS Secrets Manager for credential management
+
+## Prerequisites
+
+### Install Terraform in AWS CloudShell
+Run these commands in both AWS account CloudShells:
+
+```bash
+# Download Terraform
+wget https://releases.hashicorp.com/terraform/1.6.6/terraform_1.6.6_linux_amd64.zip
+
+# Unzip
+unzip terraform_1.6.6_linux_amd64.zip
+
+# Move to bin directory
+mkdir -p ~/bin
+mv terraform ~/bin/
+
+# Add to PATH (persists in CloudShell)
+echo 'export PATH=$HOME/bin:$PATH' >> ~/.bashrc
+source ~/.bashrc
+
+# Verify installation
+terraform version
+```
+
+### Clone Repository
+```bash
+git clone https://github.com/eyalestrin/amazon-vpc-lattice.git
+cd amazon-vpc-lattice
+```
+
+### Install PostgreSQL Client (RDS Account Only)
+Run these commands in the RDS AWS account CloudShell:
+
+```bash
+# Install PostgreSQL client
+sudo yum install -y postgresql15
+
+# Verify installation
+psql --version
+```
+
+## Get Account IDs Before Deployment
+
+### Lambda Account (Account 1)
+Run in Lambda account CloudShell:
+```bash
+# Get lambda_account_id
+aws sts get-caller-identity --query Account --output text
+# Save this value - you'll need it for rds/terraform.tfvars -> lambda_account_id
+```
+
+### RDS Account (Account 2)
+Run in RDS account CloudShell:
+```bash
+# Get rds_account_id
+aws sts get-caller-identity --query Account --output text
+# Save this value - you'll need it for lambda/terraform.tfvars -> rds_account_id
+```
+
+## Deployment Steps
+
+### 1. Deploy Lambda Account (Account 1)
+```bash
+cd lambda
+cp terraform.tfvars.example terraform.tfvars
+# Edit terraform.tfvars with:
+# - rds_account_id = "<value from RDS account>"
+terraform init
+terraform plan
+terraform apply
+```
+
+**Get lambda_service_network_arn:**
+```bash
+aws vpc-lattice list-service-networks --query 'items[?name==`lambda-rds-network`].arn' --output text
+# Save this value - you'll need it for rds/terraform.tfvars -> lambda_service_network_arn
+```
+
+### 2. Deploy RDS Account (Account 2)
+```bash
+cd ../rds
+cp terraform.tfvars.example terraform.tfvars
+# Edit terraform.tfvars with:
+# - lambda_account_id = "<value from Lambda account>"
+# - lambda_service_network_arn = "<value from step 1>"
+terraform init
+terraform plan
+terraform apply
+```
+
+**Get RDS variables:**
+```bash
+# Get db_secret_arn
+aws secretsmanager list-secrets --query 'SecretList[?Name==`rds-db-credentials`].ARN' --output text
+# Save this value - you'll need it for lambda/terraform.tfvars -> db_secret_arn
+
+# Get rds_vpc_lattice_service_arn
+aws vpc-lattice list-services --query 'items[?name==`rds-postgres-service`].arn' --output text
+# Save this value - you'll need it for lambda/terraform.tfvars -> rds_vpc_lattice_service_arn
+```
+
+### 3. Update Lambda Account
+```bash
+cd ../lambda
+# Edit terraform.tfvars with:
+# - db_secret_arn = "<value from step 2>"
+# - rds_vpc_lattice_service_arn = "<value from step 2>"
+terraform apply
+```
+
+### 4. Load Sample Data
+```bash
+cd rds
+# Get RDS endpoint
+RDS_ENDPOINT=$(aws rds describe-db-instances --db-instance-identifier transactions-db --query 'DBInstances[0].Endpoint.Address' --output text)
+
+# Load data
+psql -h $RDS_ENDPOINT -U admin -d transactions_db -f transactions_data.sql
+```
+
+## Access
+- Website: Check `website_url` output from Lambda deployment
+- Lambda: Invoke via AWS Console or CLI
+
+## Security Features
+- AWS Secrets Manager stores RDS credentials securely
+- Cross-account secret access with resource policies
+- IAM authentication enabled for RDS
+- VPC Lattice with AWS_IAM authentication
+- Lambda execution role with least privilege
+- No hardcoded credentials in code or environment variables
+
+## Files
+- `lambda/` - Lambda function, S3 website, VPC Lattice network
+- `rds/` - PostgreSQL RDS, Secrets Manager, VPC Lattice service
+- `lambda/query.html` - Static website UI
+- `lambda/lambda_rds_reader.py` - Lambda function code
+- `rds/transactions_data.sql` - Sample data for PostgreSQL
