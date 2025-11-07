@@ -3,8 +3,10 @@
 ## Architecture
 - **Account 1 (Lambda)**: S3 static website + Lambda function + VPC Lattice Service Network
 - **Account 2 (RDS)**: PostgreSQL RDS + VPC Lattice Service + AWS Secrets Manager
-- **Connection**: VPC Lattice for cross-account, cross-VPC communication
+- **Connection**: VPC Lattice for cross-account, cross-VPC communication (HTTPS protocol)
 - **Security**: AWS Secrets Manager for credential management
+
+**Note**: VPC Lattice supports HTTP, HTTPS, and TLS_PASSTHROUGH protocols only. PostgreSQL connection uses HTTPS on port 443.
 
 ## Prerequisites
 

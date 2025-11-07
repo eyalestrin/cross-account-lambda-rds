@@ -94,8 +94,18 @@ resource "aws_vpclattice_target_group" "rds" {
   type = "IP"
   config {
     port             = 5432
-    protocol         = "TCP"
+    protocol         = "HTTPS"
     vpc_identifier   = data.aws_vpc.default.id
+    protocol_version = "HTTP1"
+  }
+}
+
+# Register RDS instance as target
+resource "aws_vpclattice_target_group_attachment" "rds" {
+  target_group_identifier = aws_vpclattice_target_group.rds.id
+  target {
+    id   = aws_db_instance.postgres.address
+    port = 5432
   }
 }
 
@@ -107,9 +117,9 @@ resource "aws_vpclattice_service" "rds" {
 
 resource "aws_vpclattice_listener" "rds" {
   name               = "postgres-listener"
-  protocol           = "TCP"
+  protocol           = "HTTPS"
   service_identifier = aws_vpclattice_service.rds.id
-  port               = 5432
+  port               = 443
   default_action {
     forward {
       target_groups {
