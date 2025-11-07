@@ -182,6 +182,17 @@ BUCKET_NAME=$(terraform output -raw website_url | cut -d'/' -f3 | cut -d'.' -f1)
 aws s3 cp query.html s3://$BUCKET_NAME/index.html --content-type text/html
 ```
 
+# Get API endpoint
+API_ENDPOINT=$(terraform output -raw api_endpoint)
+
+# Update HTML with API endpoint
+sed -i "s|API_ENDPOINT_PLACEHOLDER|$API_ENDPOINT|g" query.html
+
+# Upload updated HTML
+BUCKET_NAME=$(terraform output -raw website_url | cut -d'/' -f3 | cut -d'.' -f1)
+aws s3 cp query.html s3://$BUCKET_NAME/index.html --content-type text/html
+```
+
 ### 4. Load Sample Data
 ```bash
 cd rds
