@@ -126,6 +126,10 @@ terraform apply
 # In RDS account CloudShell
 RAM_INVITATION=$(aws ram get-resource-share-invitations --query 'resourceShareInvitations[0].resourceShareInvitationArn' --output text)
 aws ram accept-resource-share-invitation --resource-share-invitation-arn $RAM_INVITATION
+
+# Verify acceptance
+aws ram get-resource-shares --resource-owner OTHER-ACCOUNTS --query 'resourceShares[0].status' --output text
+# Should show: ACTIVE
 ```
 
 ### 2. Deploy RDS Account (Account 2)
