@@ -97,7 +97,7 @@ resource "aws_db_instance" "postgres" {
   password               = random_password.db_password.result
   db_subnet_group_name   = aws_db_subnet_group.rds.name
   vpc_security_group_ids = [aws_security_group.rds.id]
-  publicly_accessible    = false
+  publicly_accessible    = true
   skip_final_snapshot    = true
   iam_database_authentication_enabled = true
 }
