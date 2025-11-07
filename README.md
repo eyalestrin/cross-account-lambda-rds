@@ -161,6 +161,9 @@ terraform apply
 ### 4. Load Sample Data
 ```bash
 cd rds
+# Update security group to allow CloudShell access
+terraform apply
+
 # Get RDS endpoint
 RDS_ENDPOINT=$(aws rds describe-db-instances --db-instance-identifier transactions-db --query 'DBInstances[0].Endpoint.Address' --output text)
 

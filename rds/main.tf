@@ -32,7 +32,7 @@ resource "random_password" "db_password" {
 # RDS security group
 resource "aws_security_group" "rds" {
   name        = "rds-postgres-lattice"
-  description = "Allow PostgreSQL access via VPC Lattice"
+  description = "Allow PostgreSQL access via VPC Lattice and CloudShell"
   vpc_id      = data.aws_vpc.default.id
 
   ingress {
@@ -40,6 +40,15 @@ resource "aws_security_group" "rds" {
     to_port     = 5432
     protocol    = "tcp"
     cidr_blocks = [data.aws_vpc.default.cidr_block]
+    description = "Allow from VPC"
+  }
+
+  ingress {
+    from_port   = 5432
+    to_port     = 5432
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+    description = "Allow from CloudShell for data loading"
   }
 
   egress {
