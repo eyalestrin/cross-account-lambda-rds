@@ -7,15 +7,17 @@
 - **Security**: VPC Lattice with AWS_IAM authentication, RDS in private subnet
 
 **VPC Lattice Flow:**
-1. Frontend Lambda (in VPC) calls VPC Lattice HTTPS endpoint via VPC Endpoint
-2. Traffic stays on AWS backbone (no public internet)
+1. Frontend Lambda (no VPC) calls VPC Lattice HTTPS endpoint
+2. VPC Lattice Service Network routes traffic via AWS backbone
 3. VPC Lattice routes to Proxy Lambda in Account 2
 4. Proxy Lambda (in VPC) connects to private RDS
 5. Returns data through VPC Lattice to Frontend Lambda
 
+**Note**: Frontend Lambda is not in VPC to avoid NAT Gateway costs. VPC Lattice handles cross-account routing.
+
 ## Prerequisites
 
-**Note**: This deployment creates a VPC Endpoint in the Lambda account (~$7.20/month) to enable VPC Lattice access from Lambda via AWS backbone.
+**Note**: This solution uses VPC Lattice for cross-account communication without NAT Gateway or VPC Endpoints (no additional networking costs).
 
 ### Disable S3 Block Public Access (Lambda Account Only)
 Run in Lambda account CloudShell:

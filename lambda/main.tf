@@ -31,15 +31,8 @@ data "aws_subnets" "default" {
   }
 }
 
-# VPC Endpoint for VPC Lattice (cheaper than NAT Gateway)
-resource "aws_vpc_endpoint" "vpc_lattice" {
-  vpc_id              = data.aws_vpc.default.id
-  service_name        = "com.amazonaws.${var.aws_region}.vpc-lattice"
-  vpc_endpoint_type   = "Interface"
-  subnet_ids          = data.aws_subnets.default.ids
-  security_group_ids  = [aws_security_group.lambda.id]
-  private_dns_enabled = true
-}
+# VPC Lattice uses service network VPC association for connectivity
+# No VPC Endpoint needed - DNS resolves to VPC Lattice service
 
 # Random S3 bucket name
 resource "random_string" "bucket_suffix" {
@@ -95,6 +88,14 @@ resource "aws_security_group" "lambda" {
   name        = "lambda-rds-access"
   description = "Allow Lambda to access RDS via VPC Lattice"
   vpc_id      = data.aws_vpc.default.id
+
+  egress {
+    from_port   = 443
+    to_port     = 443
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+    description = "HTTPS for VPC Lattice"
+  }
 
   egress {
     from_port   = 0
@@ -210,11 +211,6 @@ resource "aws_lambda_function" "rds_reader" {
   runtime         = "python3.11"
   source_code_hash = data.archive_file.lambda.output_base64sha256
   timeout         = 30
-
-  vpc_config {
-    subnet_ids         = data.aws_subnets.default.ids
-    security_group_ids = [aws_security_group.lambda.id]
-  }
 
   environment {
     variables = {
