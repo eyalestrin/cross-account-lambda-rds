@@ -203,10 +203,6 @@ resource "aws_lambda_function" "rds_reader" {
   }
 }
 
-output "website_url" {
-  value = "http://${aws_s3_bucket_website_configuration.website.website_endpoint}"
-}
-
 # API Gateway for Lambda
 resource "aws_apigatewayv2_api" "lambda" {
   name          = "transaction-api"
