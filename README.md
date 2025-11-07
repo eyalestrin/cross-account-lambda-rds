@@ -118,6 +118,7 @@ cp terraform.tfvars.example terraform.tfvars
 # - lambda_account_id = "<value from Lambda account>"
 # - lambda_service_network_arn = "<value from step 1>"
 # CRITICAL: Use the ACTUAL ARN from step 1, not the example placeholder
+# CRITICAL: Ensure db_username = "dbadmin" (not "admin" - it's a reserved word)
 terraform init
 terraform plan
 terraform apply

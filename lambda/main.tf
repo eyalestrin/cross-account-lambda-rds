@@ -106,6 +106,26 @@ resource "aws_vpclattice_service_network" "main" {
   auth_type = "AWS_IAM"
 }
 
+# Resource policy to allow RDS account to associate services
+resource "aws_vpclattice_resource_policy" "service_network" {
+  resource_arn = aws_vpclattice_service_network.main.arn
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Effect = "Allow"
+      Principal = {
+        AWS = "arn:aws:iam::${var.rds_account_id}:root"
+      }
+      Action = [
+        "vpc-lattice:CreateServiceNetworkServiceAssociation",
+        "vpc-lattice:GetServiceNetworkServiceAssociation",
+        "vpc-lattice:DeleteServiceNetworkServiceAssociation"
+      ]
+      Resource = aws_vpclattice_service_network.main.arn
+    }]
+  })
+}
+
 # Lambda IAM role
 resource "aws_iam_role" "lambda" {
   name = "lambda-rds-execution-role"
