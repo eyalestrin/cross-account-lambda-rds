@@ -155,11 +155,6 @@ resource "aws_iam_role_policy" "lambda_rds_iam_auth" {
           "vpc-lattice:Invoke"
         ]
         Resource = "*"
-      },
-      {
-        Effect = "Allow"
-        Action = "secretsmanager:GetSecretValue"
-        Resource = "*"
       }
     ]
   })
