@@ -110,6 +110,13 @@ aws vpc-lattice list-service-networks --query 'items[?name==`lambda-rds-network`
 # Save this value - you'll need it for rds/terraform.tfvars -> lambda_service_network_arn
 ```
 
+**Update Lambda to add resource policy:**
+```bash
+# Still in Lambda account
+terraform apply
+# This adds the resource policy allowing RDS account to associate services
+```
+
 ### 2. Deploy RDS Account (Account 2)
 ```bash
 cd ../rds

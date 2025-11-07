@@ -91,21 +91,9 @@ resource "aws_db_instance" "postgres" {
 # VPC Lattice target group for RDS
 resource "aws_vpclattice_target_group" "rds" {
   name = "rds-postgres-tg"
-  type = "IP"
+  type = "LAMBDA"
   config {
-    port             = 5432
-    protocol         = "HTTPS"
-    vpc_identifier   = data.aws_vpc.default.id
-    protocol_version = "HTTP1"
-  }
-}
-
-# Register RDS instance as target
-resource "aws_vpclattice_target_group_attachment" "rds" {
-  target_group_identifier = aws_vpclattice_target_group.rds.id
-  target {
-    id   = aws_db_instance.postgres.address
-    port = 5432
+    lambda_event_structure_version = "V2"
   }
 }
 
@@ -121,10 +109,8 @@ resource "aws_vpclattice_listener" "rds" {
   service_identifier = aws_vpclattice_service.rds.id
   port               = 443
   default_action {
-    forward {
-      target_groups {
-        target_group_identifier = aws_vpclattice_target_group.rds.id
-      }
+    fixed_response {
+      status_code = 200
     }
   }
 }
