@@ -10,7 +10,7 @@ variable "rds_account_id" {
 }
 
 variable "db_secret_arn" {
-  description = "ARN of AWS Secrets Manager secret containing RDS credentials from RDS account. Get with: aws secretsmanager list-secrets --query 'SecretList[?starts_with(Name, `rds-db-credentials`)].ARN' --output text"
+  description = "ARN of AWS Secrets Manager secret containing RDS credentials from RDS account. Get with: aws secretsmanager list-secrets --query 'SecretList[?starts_with(Name, `rds-db-credentials`) && !DeletedDate].ARN' --output text"
   type        = string
 }
 
