@@ -31,6 +31,16 @@ data "aws_subnets" "default" {
   }
 }
 
+# VPC Endpoint for VPC Lattice (cheaper than NAT Gateway)
+resource "aws_vpc_endpoint" "vpc_lattice" {
+  vpc_id              = data.aws_vpc.default.id
+  service_name        = "com.amazonaws.${var.aws_region}.vpc-lattice"
+  vpc_endpoint_type   = "Interface"
+  subnet_ids          = data.aws_subnets.default.ids
+  security_group_ids  = [aws_security_group.lambda.id]
+  private_dns_enabled = true
+}
+
 # Random S3 bucket name
 resource "random_string" "bucket_suffix" {
   length  = 8
@@ -150,10 +160,7 @@ resource "aws_iam_role_policy" "lambda_rds_iam_auth" {
     Statement = [
       {
         Effect = "Allow"
-        Action = [
-          "rds-db:connect",
-          "vpc-lattice:Invoke"
-        ]
+        Action = "vpc-lattice-svcs:Invoke"
         Resource = "*"
       }
     ]

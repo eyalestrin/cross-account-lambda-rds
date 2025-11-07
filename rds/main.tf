@@ -206,6 +206,13 @@ resource "aws_lambda_permission" "vpc_lattice" {
   principal     = "vpc-lattice.amazonaws.com"
 }
 
+resource "aws_lambda_permission" "cross_account" {
+  statement_id  = "AllowLambdaAccountInvoke"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.proxy.function_name
+  principal     = var.lambda_account_id
+}
+
 # VPC Lattice service
 resource "aws_vpclattice_service" "rds" {
   name      = "rds-postgres-service"
