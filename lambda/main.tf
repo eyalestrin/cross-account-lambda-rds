@@ -165,21 +165,38 @@ resource "aws_iam_role_policy" "lambda_rds_iam_auth" {
   })
 }
 
-# Lambda function with dependencies
-resource "null_resource" "lambda_dependencies" {
+# Lambda layer for psycopg2
+resource "null_resource" "psycopg2_layer" {
   provisioner "local-exec" {
-    command = "rm -rf ${path.module}/package && mkdir -p ${path.module}/package && pip3 install psycopg2-binary boto3 -t ${path.module}/package && cp ${path.module}/lambda_rds_reader.py ${path.module}/package/"
+    command = <<-EOT
+      mkdir -p ${path.module}/layer/python
+      pip3 install --platform manylinux2014_x86_64 --only-binary=:all: psycopg2-binary -t ${path.module}/layer/python
+    EOT
   }
   triggers = {
     always_run = timestamp()
   }
 }
 
+data "archive_file" "psycopg2_layer" {
+  type        = "zip"
+  source_dir  = "${path.module}/layer"
+  output_path = "${path.module}/psycopg2_layer.zip"
+  depends_on  = [null_resource.psycopg2_layer]
+}
+
+resource "aws_lambda_layer_version" "psycopg2" {
+  filename            = data.archive_file.psycopg2_layer.output_path
+  layer_name          = "psycopg2-layer"
+  compatible_runtimes = ["python3.11"]
+  source_code_hash    = data.archive_file.psycopg2_layer.output_base64sha256
+}
+
+# Lambda function
 data "archive_file" "lambda" {
   type        = "zip"
-  source_dir  = "${path.module}/package"
+  source_file = "${path.module}/lambda_rds_reader.py"
   output_path = "${path.module}/lambda_function.zip"
-  depends_on  = [null_resource.lambda_dependencies]
 }
 
 resource "aws_lambda_function" "rds_reader" {
@@ -201,6 +218,8 @@ resource "aws_lambda_function" "rds_reader" {
       DB_SECRET_ARN = var.db_secret_arn
     }
   }
+
+  layers = [aws_lambda_layer_version.psycopg2.arn]
 }
 
 # API Gateway for Lambda

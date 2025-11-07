@@ -8,7 +8,9 @@
 
 # Lambda
 lambda/package/
+lambda/layer/
 lambda/lambda_function.zip
+lambda/psycopg2_layer.zip
 lambda/.terraform/
 
 # RDS
