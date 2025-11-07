@@ -114,14 +114,10 @@ resource "aws_vpclattice_resource_policy" "service_network" {
     Statement = [{
       Effect = "Allow"
       Principal = {
-        AWS = "arn:aws:iam::${var.rds_account_id}:root"
+        AWS = "${var.rds_account_id}"
       }
-      Action = [
-        "vpc-lattice:CreateServiceNetworkServiceAssociation",
-        "vpc-lattice:GetServiceNetworkServiceAssociation",
-        "vpc-lattice:DeleteServiceNetworkServiceAssociation"
-      ]
-      Resource = aws_vpclattice_service_network.main.arn
+      Action = "*"
+      Resource = "*"
     }]
   })
 }
