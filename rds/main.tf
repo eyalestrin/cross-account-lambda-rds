@@ -163,7 +163,7 @@ resource "aws_secretsmanager_secret_policy" "cross_account" {
       Sid    = "AllowLambdaAccountAccess"
       Effect = "Allow"
       Principal = {
-        AWS = var.lambda_account_id
+        AWS = "arn:aws:iam::${var.lambda_account_id}:role/lambda-rds-execution-role"
       }
       Action = "secretsmanager:GetSecretValue"
       Resource = "*"
