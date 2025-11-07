@@ -156,6 +156,16 @@ cd ../lambda
 # - db_secret_arn = "<value from step 2>"
 # - rds_vpc_lattice_service_arn = "<value from step 2>"
 terraform apply
+
+# Get API endpoint
+API_ENDPOINT=$(terraform output -raw api_endpoint)
+
+# Update HTML with API endpoint
+sed -i "s|API_ENDPOINT_PLACEHOLDER|$API_ENDPOINT|g" query.html
+
+# Upload updated HTML
+BUCKET_NAME=$(terraform output -raw website_url | cut -d'/' -f3 | cut -d'.' -f1)
+aws s3 cp query.html s3://$BUCKET_NAME/index.html --content-type text/html
 ```
 
 ### 4. Load Sample Data

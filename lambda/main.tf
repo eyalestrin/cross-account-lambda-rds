@@ -207,6 +207,52 @@ output "website_url" {
   value = "http://${aws_s3_bucket_website_configuration.website.website_endpoint}"
 }
 
+# API Gateway for Lambda
+resource "aws_apigatewayv2_api" "lambda" {
+  name          = "transaction-api"
+  protocol_type = "HTTP"
+  cors_configuration {
+    allow_origins = ["*"]
+    allow_methods = ["GET", "POST"]
+    allow_headers = ["*"]
+  }
+}
+
+resource "aws_apigatewayv2_stage" "lambda" {
+  api_id      = aws_apigatewayv2_api.lambda.id
+  name        = "$default"
+  auto_deploy = true
+}
+
+resource "aws_apigatewayv2_integration" "lambda" {
+  api_id             = aws_apigatewayv2_api.lambda.id
+  integration_type   = "AWS_PROXY"
+  integration_uri    = aws_lambda_function.rds_reader.invoke_arn
+  integration_method = "POST"
+}
+
+resource "aws_apigatewayv2_route" "lambda" {
+  api_id    = aws_apigatewayv2_api.lambda.id
+  route_key = "POST /query"
+  target    = "integrations/${aws_apigatewayv2_integration.lambda.id}"
+}
+
+resource "aws_lambda_permission" "api_gateway" {
+  statement_id  = "AllowAPIGatewayInvoke"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.rds_reader.function_name
+  principal     = "apigateway.amazonaws.com"
+  source_arn    = "${aws_apigatewayv2_api.lambda.execution_arn}/*/*"
+}
+
+output "website_url" {
+  value = "http://${aws_s3_bucket_website_configuration.website.website_endpoint}"
+}
+
+output "api_endpoint" {
+  value = aws_apigatewayv2_api.lambda.api_endpoint
+}
+
 output "lambda_function_arn" {
   value = aws_lambda_function.rds_reader.arn
 }

@@ -8,20 +8,37 @@
     <input type="text" id="transactionId" placeholder="Please insert transaction ID" maxlength="8">
     <button onclick="validateAndSubmit()">Submit</button>
     <p id="error" style="color:red;"></p>
+    <p id="result" style="color:green;"></p>
     
     <script>
-        function validateAndSubmit() {
+        const API_ENDPOINT = 'API_ENDPOINT_PLACEHOLDER';
+        
+        async function validateAndSubmit() {
             const input = document.getElementById('transactionId').value;
             const error = document.getElementById('error');
+            const result = document.getElementById('result');
             
             if (!/^\d{8}$/.test(input)) {
                 error.textContent = 'Invalid: Must be exactly 8 digits';
+                result.textContent = '';
                 return;
             }
             
             error.textContent = '';
-            // Call your Lambda API here
-            console.log('Valid transaction ID:', input);
+            result.textContent = 'Loading...';
+            
+            try {
+                const response = await fetch(`${API_ENDPOINT}/query`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({transaction_id: input})
+                });
+                const data = await response.json();
+                result.textContent = `Description: ${data[input] || 'Not found'}`;
+            } catch (err) {
+                error.textContent = 'Error: ' + err.message;
+                result.textContent = '';
+            }
         }
     </script>
 </body>
