@@ -110,11 +110,18 @@ aws vpc-lattice list-service-networks --query 'items[?name==`lambda-rds-network`
 # Save this value - you'll need it for rds/terraform.tfvars -> lambda_service_network_arn
 ```
 
-**Update Lambda to add resource policy:**
+**Update Lambda to share service network via RAM:**
 ```bash
 # Still in Lambda account
 terraform apply
-# This adds the resource policy allowing RDS account to associate services
+# This shares the service network with RDS account via AWS RAM
+```
+
+**Accept RAM share in RDS account:**
+```bash
+# In RDS account CloudShell
+RAM_INVITATION=$(aws ram get-resource-share-invitations --query 'resourceShareInvitations[0].resourceShareInvitationArn' --output text)
+aws ram accept-resource-share-invitation --resource-share-invitation-arn $RAM_INVITATION
 ```
 
 ### 2. Deploy RDS Account (Account 2)

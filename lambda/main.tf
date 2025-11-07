@@ -106,20 +106,20 @@ resource "aws_vpclattice_service_network" "main" {
   auth_type = "AWS_IAM"
 }
 
-# Resource policy to allow RDS account to associate services
-resource "aws_vpclattice_resource_policy" "service_network" {
-  resource_arn = aws_vpclattice_service_network.main.arn
-  policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [{
-      Effect = "Allow"
-      Principal = {
-        AWS = "${var.rds_account_id}"
-      }
-      Action = "*"
-      Resource = aws_vpclattice_service_network.main.arn
-    }]
-  })
+# Share service network with RDS account using RAM
+resource "aws_ram_resource_share" "lattice" {
+  name                      = "vpc-lattice-share"
+  allow_external_principals = true
+}
+
+resource "aws_ram_resource_association" "lattice" {
+  resource_arn       = aws_vpclattice_service_network.main.arn
+  resource_share_arn = aws_ram_resource_share.lattice.arn
+}
+
+resource "aws_ram_principal_association" "lattice" {
+  principal          = var.rds_account_id
+  resource_share_arn = aws_ram_resource_share.lattice.arn
 }
 
 # Lambda IAM role
