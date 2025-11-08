@@ -46,6 +46,14 @@ resource "aws_subnet" "public" {
   map_public_ip_on_launch = true
 }
 
+# Private subnets for Lambda
+resource "aws_subnet" "private" {
+  count             = 2
+  vpc_id            = data.aws_vpc.default.id
+  cidr_block        = "172.31.25${count.index}.0/24"
+  availability_zone = data.aws_availability_zones.available.names[count.index]
+}
+
 # Internet Gateway (default VPC already has one)
 data "aws_internet_gateway" "default" {
   filter {
@@ -91,10 +99,10 @@ resource "aws_route_table" "private" {
   }
 }
 
-# Associate private route table with default subnets
+# Associate private route table with Lambda subnets
 resource "aws_route_table_association" "private" {
-  count          = length(data.aws_subnets.default.ids)
-  subnet_id      = data.aws_subnets.default.ids[count.index]
+  count          = 2
+  subnet_id      = aws_subnet.private[count.index].id
   route_table_id = aws_route_table.private.id
 }
 
@@ -174,6 +182,7 @@ resource "aws_vpclattice_service_network_vpc_association" "lambda" {
   vpc_identifier             = data.aws_vpc.default.id
   service_network_identifier = aws_vpclattice_service_network.main.id
   security_group_ids         = [aws_security_group.lambda.id]
+  depends_on                 = [aws_nat_gateway.main]
 }
 
 resource "aws_vpclattice_service_network" "main" {
@@ -249,7 +258,7 @@ resource "aws_lambda_function" "rds_reader" {
   timeout         = 30
 
   vpc_config {
-    subnet_ids         = data.aws_subnets.default.ids
+    subnet_ids         = aws_subnet.private[*].id
     security_group_ids = [aws_security_group.lambda.id]
   }
 
