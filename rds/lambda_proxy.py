@@ -26,13 +26,9 @@ def lambda_handler(event, context):
         elif transaction_id:
             cur.execute("SELECT description FROM transactions WHERE transaction_id = %s", (int(transaction_id),))
             row = cur.fetchone()
-            result = {transaction_id: row[0] if row else None}
+            result = {str(transaction_id): row[0] if row else None}
         else:
-            # Insert transaction with auto-generated description
-            description = f'Transaction {transaction_id}'
-            cur.execute("INSERT INTO transactions (transaction_id, description) VALUES (%s, %s) ON CONFLICT DO NOTHING", (int(transaction_id), description))
-            conn.commit()
-            result = {'message': f'Inserted transaction {transaction_id}'}
+            result = {'error': 'No sql or transaction_id provided'}
         
         cur.close()
         conn.close()
