@@ -181,7 +181,6 @@ resource "aws_security_group" "lambda" {
 resource "aws_vpclattice_service_network_vpc_association" "lambda" {
   vpc_identifier             = data.aws_vpc.default.id
   service_network_identifier = aws_vpclattice_service_network.main.id
-  security_group_ids         = [aws_security_group.lambda.id]
   depends_on                 = [aws_nat_gateway.main]
 }
 
