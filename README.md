@@ -31,8 +31,8 @@ sudo yum install -y python3-pip
 
 ### Clone Repository
 ```bash
-git clone https://github.com/eyalestrin/amazon-vpc-lattice.git
-cd amazon-vpc-lattice
+git clone https://github.com/eyalestrin/cross-account-lambda-rds.git
+cd cross-account-lambda-rds
 ```
 
 ## Get Account IDs
