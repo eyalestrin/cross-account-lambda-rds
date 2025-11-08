@@ -167,14 +167,17 @@ aws vpc-lattice list-services --query 'items[?name==`rds-postgres-service`].arn'
 ```bash
 # In RDS account - get VPC Lattice endpoint
 terraform output vpc_lattice_endpoint
-# Copy this endpoint
+# Copy this endpoint (e.g., rds-postgres-service-xxxxx.yyyyy.vpc-lattice-svcs.us-east-1.on.aws)
 ```
 
 ```bash
 # In Lambda account
 cd ../lambda
-# Edit terraform.tfvars with:
-# - vpc_lattice_endpoint = "<value from step 2>"
+
+# Edit terraform.tfvars and add:
+# vpc_lattice_endpoint = "rds-postgres-service-xxxxx.yyyyy.vpc-lattice-svcs.us-east-1.on.aws"
+
+# Apply Terraform to update Lambda with VPC Lattice endpoint
 terraform apply
 
 # Get API endpoint and update HTML

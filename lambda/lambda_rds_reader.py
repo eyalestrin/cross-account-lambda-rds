@@ -38,8 +38,9 @@ def lambda_handler(event, context):
             retries=False
         )
         
-        # Parse response
-        result = json.loads(response.data.decode('utf-8'))
+        # Parse VPC Lattice response (has nested body)
+        lattice_response = json.loads(response.data.decode('utf-8'))
+        result = json.loads(lattice_response.get('body', '{}'))
         
         return {
             'statusCode': 200,
