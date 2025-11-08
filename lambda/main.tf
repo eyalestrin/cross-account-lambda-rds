@@ -203,11 +203,7 @@ resource "aws_iam_role_policy" "lambda_rds_iam_auth" {
 # Create psycopg2 layer
 resource "null_resource" "psycopg2_layer" {
   provisioner "local-exec" {
-    command = <<-EOT
-      mkdir -p ${path.module}/layer/python
-      pip3 download psycopg2-binary --platform manylinux2014_x86_64 --python-version 3.11 --only-binary=:all: -d ${path.module}/layer/
-      cd ${path.module}/layer && unzip -o *.whl -d python/ && rm *.whl
-    EOT
+    command = "mkdir -p ${path.module}/layer/python && pip3 download psycopg2-binary --platform manylinux2014_x86_64 --python-version 3.11 --only-binary=:all: -d ${path.module}/layer/ && cd ${path.module}/layer && unzip -q -o *.whl -d python/ 2>/dev/null || true && rm -f *.whl 2>/dev/null || true"
   }
   triggers = {
     always_run = timestamp()
