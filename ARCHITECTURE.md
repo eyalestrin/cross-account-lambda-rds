@@ -1,52 +1,52 @@
-# VPC Lattice Architecture with NAT Gateway
+# Architecture Overview
 
-## Complete Flow
+## Components
+
+### Lambda Account (Account 1)
+- **S3 Bucket**: Hosts static website (query.html)
+- **API Gateway**: HTTP API endpoint for frontend
+- **Frontend Lambda**: Receives requests from API Gateway, invokes RDS proxy Lambda cross-account
+- **IAM Role**: Allows Lambda to invoke function in RDS account
+
+### RDS Account (Account 2)
+- **RDS PostgreSQL**: Private database in VPC (db.t3.micro)
+- **Proxy Lambda**: Connects to RDS, executes queries
+- **Lambda Layer**: psycopg2 for PostgreSQL connectivity
+- **Secrets Manager**: Stores RDS credentials
+- **Lambda Permission**: Allows Lambda account to invoke proxy Lambda
+
+## Data Flow
 
 ```
 User Browser
     ↓
-S3 Static Website (Account 1)
+S3 Static Website (query.html)
     ↓
-API Gateway (Account 1)
+API Gateway (HTTPS)
     ↓
-Frontend Lambda (Account 1, in VPC)
+Frontend Lambda (Account 1)
     ↓
-NAT Gateway (Account 1) - ~$32/month
+Cross-Account Lambda Invoke (IAM)
     ↓
-Internet (DNS resolution)
+Proxy Lambda (Account 2)
     ↓
-VPC Lattice Service Network (Account 1)
-    ↓ (AWS Backbone - cross-account)
-VPC Lattice Service (Account 2)
-    ↓
-Proxy Lambda (Account 2, in VPC)
-    ↓
-RDS PostgreSQL (Account 2, private)
+RDS PostgreSQL (Private)
 ```
 
-## Why NAT Gateway is Required
+## Security
 
-- Lambda in VPC has no internet access by default
-- VPC Lattice DNS endpoints require internet connectivity
-- NAT Gateway provides outbound internet access
-- Traffic to VPC Lattice goes through AWS backbone after DNS resolution
+1. **Cross-Account Access**: IAM-based Lambda invoke (no VPC peering needed)
+2. **RDS Isolation**: Private subnet, not publicly accessible
+3. **Credentials**: Stored in Secrets Manager, passed via environment variables
+4. **API Security**: CORS enabled, API Gateway authentication optional
+5. **Least Privilege**: Lambda roles have minimal required permissions
 
-## Cost Breakdown
+## Cost Estimate
 
-| Component | Monthly Cost |
-|-----------|--------------|
-| NAT Gateway | ~$32 |
-| Data Transfer (NAT) | ~$0.045/GB |
-| Lambda | Pay per invocation |
-| RDS db.t3.micro | ~$15 |
-| VPC Lattice | Pay per GB processed |
-| **Total** | **~$47+/month** |
+- **RDS db.t3.micro**: ~$15/month
+- **Lambda**: Free tier covers most usage
+- **API Gateway**: $1 per million requests
+- **S3**: Minimal (static website)
+- **Secrets Manager**: $0.40/month per secret
 
-## Alternative: Direct Lambda Invocation (No VPC Lattice)
-
-```
-Frontend Lambda → AWS SDK → Proxy Lambda → RDS
-```
-
-**Cost**: ~$15/month (RDS only)
-**Savings**: ~$32/month (no NAT Gateway)
+**Total**: ~$16-20/month
