@@ -224,6 +224,53 @@ done
 - Website: Check `website_url` output from Lambda deployment
 - Lambda: Invoke via AWS Console or CLI
 
+## Troubleshooting
+
+### Lambda Timeout Error
+If you see `Sandbox.Timedout` error when testing Lambda:
+
+**Verify NAT Gateway is deployed:**
+```bash
+# In Lambda account
+cd lambda
+terraform apply
+```
+
+**Check VPC Lattice endpoint is configured:**
+```bash
+# Verify environment variable is set
+aws lambda get-function-configuration --function-name transaction-rds-reader --query 'Environment.Variables.VPC_LATTICE_ENDPOINT' --output text
+```
+
+**Test proxy Lambda directly in RDS account:**
+```bash
+# In RDS account - test proxy Lambda works
+aws lambda invoke \
+  --function-name rds-proxy-lambda \
+  --cli-binary-format raw-in-base64-out \
+  --payload '{"body":"{\"transaction_id\":\"10234567\"}"}' \
+  response.json
+cat response.json
+```
+
+**Check VPC Lattice service is associated:**
+```bash
+# In RDS account - verify service network association
+aws vpc-lattice list-service-network-service-associations --service-network-identifier <lambda_service_network_arn>
+```
+
+**Verify NAT Gateway route:**
+```bash
+# In Lambda account - check private subnet routes to NAT Gateway
+aws ec2 describe-route-tables --filters "Name=tag:Name,Values=*private*" --query 'RouteTables[].Routes'
+```
+
+**Common Issues:**
+- VPC_LATTICE_ENDPOINT not set: Run `terraform apply` in Lambda account after getting endpoint from RDS account
+- NAT Gateway not deployed: Ensure `terraform apply` completed successfully in Lambda account
+- VPC Lattice service not associated: Verify RAM share was accepted in RDS account
+- Proxy Lambda timeout: Check RDS security group allows traffic from proxy Lambda
+
 ## Security Features
 - AWS Secrets Manager stores RDS credentials securely
 - Cross-account secret access with resource policies

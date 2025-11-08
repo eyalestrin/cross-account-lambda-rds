@@ -18,7 +18,14 @@ def lambda_handler(event, context):
             }
         
         # Call VPC Lattice proxy Lambda via HTTPS
-        vpc_lattice_endpoint = os.environ['VPC_LATTICE_ENDPOINT']
+        vpc_lattice_endpoint = os.environ.get('VPC_LATTICE_ENDPOINT')
+        if not vpc_lattice_endpoint:
+            return {
+                'statusCode': 500,
+                'headers': {'Access-Control-Allow-Origin': '*'},
+                'body': json.dumps({'error': 'VPC_LATTICE_ENDPOINT not configured'})
+            }
+        
         if not vpc_lattice_endpoint.startswith('http'):
             vpc_lattice_endpoint = f'https://{vpc_lattice_endpoint}'
         
@@ -27,7 +34,8 @@ def lambda_handler(event, context):
             vpc_lattice_endpoint,
             body=json.dumps({'transaction_id': transaction_id}),
             headers={'Content-Type': 'application/json'},
-            timeout=25.0
+            timeout=50.0,
+            retries=False
         )
         
         # Parse response
@@ -37,6 +45,12 @@ def lambda_handler(event, context):
             'statusCode': 200,
             'headers': {'Access-Control-Allow-Origin': '*'},
             'body': json.dumps(result)
+        }
+    except urllib3.exceptions.TimeoutError as e:
+        return {
+            'statusCode': 504,
+            'headers': {'Access-Control-Allow-Origin': '*'},
+            'body': json.dumps({'error': f'VPC Lattice timeout: {str(e)}'})
         }
     except Exception as e:
         return {

@@ -255,7 +255,7 @@ resource "aws_lambda_function" "rds_reader" {
   handler         = "lambda_rds_reader.lambda_handler"
   runtime         = "python3.11"
   source_code_hash = data.archive_file.lambda.output_base64sha256
-  timeout         = 30
+  timeout         = 60
 
   vpc_config {
     subnet_ids         = aws_subnet.private[*].id
