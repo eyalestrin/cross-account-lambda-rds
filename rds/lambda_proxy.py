@@ -4,34 +4,38 @@ import os
 
 def lambda_handler(event, context):
     try:
-        # Parse VPC Lattice event
+        # Parse event body
         body = json.loads(event.get('body', '{}'))
         transaction_id = body.get('transaction_id')
+        sql = body.get('sql')
         
-        if not transaction_id:
-            return {
-                'statusCode': 400,
-                'body': json.dumps({'error': 'transaction_id required'})
-            }
-        
-        # Connect to RDS (same VPC)
+        # Connect to RDS
         conn = psycopg2.connect(
             host=os.environ['DB_HOST'],
             database=os.environ['DB_NAME'],
             user=os.environ['DB_USER'],
             password=os.environ['DB_PASSWORD']
         )
-        
-        # Query specific transaction
         cur = conn.cursor()
-        cur.execute("SELECT description FROM transactions WHERE transaction_id = %s", (int(transaction_id),))
-        row = cur.fetchone()
+        
+        # Execute SQL or query transaction
+        if sql:
+            cur.execute(sql)
+            conn.commit()
+            result = {'message': 'SQL executed successfully'}
+        elif transaction_id:
+            cur.execute("SELECT description FROM transactions WHERE transaction_id = %s", (int(transaction_id),))
+            row = cur.fetchone()
+            result = {transaction_id: row[0] if row else None}
+        else:
+            # Insert transaction with auto-generated description
+            description = f'Transaction {transaction_id}'
+            cur.execute("INSERT INTO transactions (transaction_id, description) VALUES (%s, %s) ON CONFLICT DO NOTHING", (int(transaction_id), description))
+            conn.commit()
+            result = {'message': f'Inserted transaction {transaction_id}'}
         
         cur.close()
         conn.close()
-        
-        # Return result
-        result = {transaction_id: row[0] if row else None}
         
         return {
             'statusCode': 200,
