@@ -34,7 +34,8 @@
                     body: JSON.stringify({transaction_id: input})
                 });
                 const data = await response.json();
-                result.textContent = `Description: ${data[input] || 'Not found'}`;
+                const description = data[input];
+                result.textContent = description ? `Description: ${description}` : 'Description: Not found';
             } catch (err) {
                 error.textContent = 'Error: ' + err.message;
                 result.textContent = '';

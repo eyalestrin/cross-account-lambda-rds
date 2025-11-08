@@ -177,26 +177,16 @@ cd ../lambda
 # - vpc_lattice_endpoint = "<value from step 2>"
 terraform apply
 
-# Get API endpoint
+# Get API endpoint and update HTML
 API_ENDPOINT=$(terraform output -raw api_endpoint)
+sed "s|API_ENDPOINT_PLACEHOLDER|$API_ENDPOINT|g" query.html > query_updated.html
 
-# Update HTML with API endpoint
-sed -i "s|API_ENDPOINT_PLACEHOLDER|$API_ENDPOINT|g" query.html
-
-# Upload updated HTML
+# Upload updated HTML to S3
 BUCKET_NAME=$(terraform output -raw website_url | cut -d'/' -f3 | cut -d'.' -f1)
-aws s3 cp query.html s3://$BUCKET_NAME/index.html --content-type text/html
-```
+aws s3 cp query_updated.html s3://$BUCKET_NAME/index.html --content-type text/html
 
-# Get API endpoint
-API_ENDPOINT=$(terraform output -raw api_endpoint)
-
-# Update HTML with API endpoint
-sed -i "s|API_ENDPOINT_PLACEHOLDER|$API_ENDPOINT|g" query.html
-
-# Upload updated HTML
-BUCKET_NAME=$(terraform output -raw website_url | cut -d'/' -f3 | cut -d'.' -f1)
-aws s3 cp query.html s3://$BUCKET_NAME/index.html --content-type text/html
+# Verify upload
+echo "Website URL: $(terraform output -raw website_url)"
 ```
 
 ### 4. Load Sample Data
@@ -278,6 +268,25 @@ aws ec2 describe-route-tables --filters "Name=tag:Name,Values=*private*" --query
 - VPC Lattice with AWS_IAM authentication
 - Lambda execution role with least privilege
 - No hardcoded credentials in code or environment variables
+
+## Git Commands
+
+**Push changes to repository:**
+```bash
+# Stage all changes
+git add .
+
+# Commit with message
+git commit -m "Your commit message here"
+
+# Push to GitHub
+git push
+```
+
+**Check status:**
+```bash
+git status
+```
 
 ## Files
 - `lambda/` - Lambda function, S3 website, VPC Lattice network
