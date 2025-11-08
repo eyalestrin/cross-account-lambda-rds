@@ -31,39 +31,71 @@ data "aws_subnets" "default" {
   }
 }
 
-# VPC Endpoints for VPC Lattice access (no NAT Gateway needed)
-# Cost: ~$7.20/month per endpoint
-
-# VPC Endpoint for DNS resolution
-resource "aws_vpc_endpoint" "route53" {
-  vpc_id              = data.aws_vpc.default.id
-  service_name        = "com.amazonaws.${var.aws_region}.route53resolver"
-  vpc_endpoint_type   = "Interface"
-  subnet_ids          = data.aws_subnets.default.ids
-  security_group_ids  = [aws_security_group.vpc_endpoints.id]
-  private_dns_enabled = true
+data "aws_availability_zones" "available" {
+  state = "available"
 }
 
-# Security group for VPC Endpoints
-resource "aws_security_group" "vpc_endpoints" {
-  name        = "vpc-endpoints-sg"
-  description = "Allow HTTPS for VPC Endpoints"
-  vpc_id      = data.aws_vpc.default.id
+# NAT Gateway for VPC Lattice access
+# Cost: ~$32/month + data transfer
 
-  ingress {
-    from_port   = 443
-    to_port     = 443
-    protocol    = "tcp"
-    cidr_blocks = [data.aws_vpc.default.cidr_block]
-    description = "HTTPS from VPC"
-  }
+# Public subnet for NAT Gateway
+resource "aws_subnet" "public" {
+  vpc_id                  = data.aws_vpc.default.id
+  cidr_block              = "172.31.255.0/28"
+  availability_zone       = data.aws_availability_zones.available.names[0]
+  map_public_ip_on_launch = true
+}
 
-  egress {
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
-    cidr_blocks = ["0.0.0.0/0"]
+# Internet Gateway (default VPC already has one)
+data "aws_internet_gateway" "default" {
+  filter {
+    name   = "attachment.vpc-id"
+    values = [data.aws_vpc.default.id]
   }
+}
+
+# Route table for public subnet
+resource "aws_route_table" "public" {
+  vpc_id = data.aws_vpc.default.id
+
+  route {
+    cidr_block = "0.0.0.0/0"
+    gateway_id = data.aws_internet_gateway.default.id
+  }
+}
+
+resource "aws_route_table_association" "public" {
+  subnet_id      = aws_subnet.public.id
+  route_table_id = aws_route_table.public.id
+}
+
+# Elastic IP for NAT Gateway
+resource "aws_eip" "nat" {
+  domain = "vpc"
+}
+
+# NAT Gateway
+resource "aws_nat_gateway" "main" {
+  allocation_id = aws_eip.nat.id
+  subnet_id     = aws_subnet.public.id
+  depends_on    = [data.aws_internet_gateway.default]
+}
+
+# Route table for private subnets (Lambda subnets)
+resource "aws_route_table" "private" {
+  vpc_id = data.aws_vpc.default.id
+
+  route {
+    cidr_block     = "0.0.0.0/0"
+    nat_gateway_id = aws_nat_gateway.main.id
+  }
+}
+
+# Associate private route table with default subnets
+resource "aws_route_table_association" "private" {
+  count          = length(data.aws_subnets.default.ids)
+  subnet_id      = data.aws_subnets.default.ids[count.index]
+  route_table_id = aws_route_table.private.id
 }
 
 # Random S3 bucket name

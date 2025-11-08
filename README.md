@@ -8,17 +8,17 @@
 
 **VPC Lattice Flow:**
 1. Frontend Lambda (in VPC) calls VPC Lattice HTTPS endpoint
-2. DNS resolution via Route53 Resolver VPC Endpoint
-3. Traffic stays on AWS backbone (no public internet)
+2. DNS resolution via NAT Gateway to internet
+3. VPC Lattice routes traffic via AWS backbone
 4. VPC Lattice routes to Proxy Lambda in Account 2
 5. Proxy Lambda (in VPC) connects to private RDS
 6. Returns data through VPC Lattice to Frontend Lambda
 
-**Cost**: ~$7.20/month for Route53 Resolver VPC Endpoint (cheaper than NAT Gateway at ~$32/month)
+**Cost**: ~$32/month for NAT Gateway + $0.045/GB data transfer
 
 ## Prerequisites
 
-**Note**: This solution uses VPC Lattice for cross-account communication with VPC Endpoints (no NAT Gateway). Cost: ~$7.20/month for Route53 Resolver endpoint.
+**Note**: This solution uses VPC Lattice for cross-account communication with NAT Gateway. Cost: ~$32/month for NAT Gateway + data transfer.
 
 ### Disable S3 Block Public Access (Lambda Account Only)
 Run in Lambda account CloudShell:
