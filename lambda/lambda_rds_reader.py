@@ -17,7 +17,7 @@ def lambda_handler(event, context):
                 'body': json.dumps({'error': 'transaction_id required'})
             }
         
-        # Call VPC Lattice proxy Lambda
+        # Call VPC Lattice proxy Lambda via HTTPS
         vpc_lattice_endpoint = os.environ['VPC_LATTICE_ENDPOINT']
         if not vpc_lattice_endpoint.startswith('http'):
             vpc_lattice_endpoint = f'https://{vpc_lattice_endpoint}'

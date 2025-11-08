@@ -31,8 +31,40 @@ data "aws_subnets" "default" {
   }
 }
 
-# VPC Lattice uses service network VPC association for connectivity
-# No VPC Endpoint needed - DNS resolves to VPC Lattice service
+# VPC Endpoints for VPC Lattice access (no NAT Gateway needed)
+# Cost: ~$7.20/month per endpoint
+
+# VPC Endpoint for DNS resolution
+resource "aws_vpc_endpoint" "route53" {
+  vpc_id              = data.aws_vpc.default.id
+  service_name        = "com.amazonaws.${var.aws_region}.route53resolver"
+  vpc_endpoint_type   = "Interface"
+  subnet_ids          = data.aws_subnets.default.ids
+  security_group_ids  = [aws_security_group.vpc_endpoints.id]
+  private_dns_enabled = true
+}
+
+# Security group for VPC Endpoints
+resource "aws_security_group" "vpc_endpoints" {
+  name        = "vpc-endpoints-sg"
+  description = "Allow HTTPS for VPC Endpoints"
+  vpc_id      = data.aws_vpc.default.id
+
+  ingress {
+    from_port   = 443
+    to_port     = 443
+    protocol    = "tcp"
+    cidr_blocks = [data.aws_vpc.default.cidr_block]
+    description = "HTTPS from VPC"
+  }
+
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+}
 
 # Random S3 bucket name
 resource "random_string" "bucket_suffix" {
@@ -211,6 +243,11 @@ resource "aws_lambda_function" "rds_reader" {
   runtime         = "python3.11"
   source_code_hash = data.archive_file.lambda.output_base64sha256
   timeout         = 30
+
+  vpc_config {
+    subnet_ids         = data.aws_subnets.default.ids
+    security_group_ids = [aws_security_group.lambda.id]
+  }
 
   environment {
     variables = {
