@@ -1,8 +1,8 @@
 import json
-import urllib3
+import boto3
 import os
 
-http = urllib3.PoolManager()
+lambda_client = boto3.client('lambda')
 
 def lambda_handler(event, context):
     try:
@@ -17,41 +17,21 @@ def lambda_handler(event, context):
                 'body': json.dumps({'error': 'transaction_id required'})
             }
         
-        # Call VPC Lattice proxy Lambda via HTTPS
-        vpc_lattice_endpoint = os.environ.get('VPC_LATTICE_ENDPOINT')
-        if not vpc_lattice_endpoint:
-            return {
-                'statusCode': 500,
-                'headers': {'Access-Control-Allow-Origin': '*'},
-                'body': json.dumps({'error': 'VPC_LATTICE_ENDPOINT not configured'})
-            }
-        
-        if not vpc_lattice_endpoint.startswith('http'):
-            vpc_lattice_endpoint = f'https://{vpc_lattice_endpoint}'
-        
-        response = http.request(
-            'POST',
-            vpc_lattice_endpoint,
-            body=json.dumps({'transaction_id': transaction_id}),
-            headers={'Content-Type': 'application/json'},
-            timeout=50.0,
-            retries=False
+        # Call RDS proxy Lambda directly cross-account
+        response = lambda_client.invoke(
+            FunctionName='arn:aws:lambda:us-east-1:466790345536:function:rds-proxy-lambda',
+            InvocationType='RequestResponse',
+            Payload=json.dumps({'body': json.dumps({'transaction_id': transaction_id})})
         )
         
-        # Parse VPC Lattice response (has nested body)
-        lattice_response = json.loads(response.data.decode('utf-8'))
-        result = json.loads(lattice_response.get('body', '{}'))
+        # Parse response
+        response_payload = json.loads(response['Payload'].read())
+        result = json.loads(response_payload.get('body', '{}'))
         
         return {
             'statusCode': 200,
             'headers': {'Access-Control-Allow-Origin': '*'},
             'body': json.dumps(result)
-        }
-    except urllib3.exceptions.TimeoutError as e:
-        return {
-            'statusCode': 504,
-            'headers': {'Access-Control-Allow-Origin': '*'},
-            'body': json.dumps({'error': f'VPC Lattice timeout: {str(e)}'})
         }
     except Exception as e:
         return {
