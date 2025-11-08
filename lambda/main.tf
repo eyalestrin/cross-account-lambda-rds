@@ -200,30 +200,6 @@ resource "aws_iam_role_policy" "lambda_rds_iam_auth" {
   })
 }
 
-# Create psycopg2 layer
-resource "null_resource" "psycopg2_layer" {
-  provisioner "local-exec" {
-    command = "mkdir -p ${path.module}/layer/python && pip3 download psycopg2-binary --platform manylinux2014_x86_64 --python-version 3.11 --only-binary=:all: -d ${path.module}/layer/ && cd ${path.module}/layer && unzip -q -o *.whl -d python/ 2>/dev/null || true && rm -f *.whl 2>/dev/null || true"
-  }
-  triggers = {
-    always_run = timestamp()
-  }
-}
-
-data "archive_file" "psycopg2_layer" {
-  type        = "zip"
-  source_dir  = "${path.module}/layer"
-  output_path = "${path.module}/psycopg2_layer.zip"
-  depends_on  = [null_resource.psycopg2_layer]
-}
-
-resource "aws_lambda_layer_version" "psycopg2" {
-  filename            = data.archive_file.psycopg2_layer.output_path
-  layer_name          = "psycopg2-layer"
-  compatible_runtimes = ["python3.11"]
-  source_code_hash    = data.archive_file.psycopg2_layer.output_base64sha256
-}
-
 # Lambda function
 data "archive_file" "lambda" {
   type        = "zip"
@@ -250,8 +226,6 @@ resource "aws_lambda_function" "rds_reader" {
       VPC_LATTICE_ENDPOINT = var.vpc_lattice_endpoint
     }
   }
-
-  layers = [aws_lambda_layer_version.psycopg2.arn]
 }
 
 # API Gateway for Lambda
